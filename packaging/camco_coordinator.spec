@@ -27,6 +27,13 @@ a = Analysis(
         "alembic",
         "PySide6.QtCharts",
         "reportlab.graphics.barcode",
+        # PyInstaller's static analysis misses these stdlib submodules
+        # because alembic/logging import them dynamically rather than with a
+        # plain top-level `import` PyInstaller's scanner can see - confirmed
+        # by an actual frozen-build smoke test, not a guess (see
+        # docs/PACKAGING.md).
+        "logging.config",
+        "logging.handlers",
     ],
     hookspath=[],
     runtime_hooks=[],

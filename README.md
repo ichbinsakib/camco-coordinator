@@ -67,3 +67,4 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown of
 - [Assumptions made where the spec was ambiguous](docs/ASSUMPTIONS.md)
 - [Performance notes (100k-row benchmarks)](docs/PERFORMANCE.md)
 - [Security review](docs/SECURITY.md)
+- [Packaging (EXE build, installer)](docs/PACKAGING.md)

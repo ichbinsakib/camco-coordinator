@@ -190,11 +190,24 @@ what came before (spec rule 62).
 - 12 new tests (6 idle-lock unit, 2 idle-lock `pytest-qt`, 4 performance) -
   125 passing tests total (121 default + 4 slow)
 
-## Phase 8 — EXE packaging / installer / deployment
+## Phase 8 — EXE packaging / installer / deployment ⚙️ MOSTLY COMPLETE
 
-- Finalize PyInstaller build, verify on a clean Windows VM (no Python
-  installed)
-- Inno Setup installer, versioned releases
+- Built the real PyInstaller executable (`python scripts\build_exe.py`) and
+  smoke-tested it - launched the actual frozen `.exe` headlessly, confirmed
+  via its log file and the resulting SQLite database that it created its
+  full 21-table schema, stamped the Alembic revision, and bootstrapped the
+  default admin account, all cleanly
+- Found and fixed a real packaging bug this way (not something a source-level
+  test could ever catch): PyInstaller's import scanner missed
+  `logging.config`/`logging.handlers`, which silently broke the bundled
+  Alembic env's migration-stamping step on every fresh install. Added both
+  to `hiddenimports`, rebuilt, re-verified clean. Written up in
+  `docs/PACKAGING.md`
+- **Not yet done**: verification on a clean Windows machine with no Python
+  installed (this dev environment has Python, so that specific claim is
+  architecturally true but unproven), and compiling/testing the Inno Setup
+  installer (Inno Setup isn't installed in this environment) - both listed
+  as concrete next steps in `docs/PACKAGING.md`
 
 ## Phase 9 — Optional AI/ML (only after Phase 1-8 are stable)
 
