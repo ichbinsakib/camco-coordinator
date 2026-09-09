@@ -29,15 +29,30 @@ what came before (spec rule 62).
   auth, and backup/restore
 - PyInstaller spec + Inno Setup script scaffolding
 
-## Phase 2 — Core records (next)
+## Phase 2 — Core records ✅ COMPLETE
 
-- Parts, Customers, Vendors: full list/detail CRUD pages with search, sort,
-  filter, pagination
-- Customer Orders: list + detail page showing lines, computed remaining
-  qty/days late/priority, status change with activity-log entry
-- Repository layer for these entities (currently only the dashboard
-  aggregate repository exists)
-- Alembic initialized against the now-stable Phase 1 schema
+- Repositories for Customers, Vendors, Parts (search/pagination) and Customer
+  Orders (line-level search/filter joining CO + Customer + Part, plus
+  `get_or_create_order` for idempotent header creation)
+- Reusable list-page scaffold (`app/ui/widgets/list_page_base.py` +
+  `table_model.py`) - search box, entity-specific filter slot, sortable-look
+  table, New/Edit/Delete toolbar (hidden entirely for VIEWER role),
+  pagination - so every master-data page is "define columns + a loader",
+  not a hand-rolled `QAbstractTableModel`
+- Customers, Vendors, Parts pages: full CRUD with edit dialogs, delete
+  protection when referenced by other records (suggests deactivation
+  instead), every change written to the activity log
+- Customer Orders page: line-level worklist (spec section 13) showing
+  computed remaining qty, days-late/due, and live-computed priority
+  (colored via the same `AppSettings.status_colors` the dashboard uses) -
+  status filter (Open Only / All / specific status), new-line creation that
+  creates the CO header on first use of a CO number
+- Alembic initialized against the Phase 1 schema; `init_database()` now
+  stamps a fresh database at head and upgrades/stamps an existing one
+  automatically, so future schema changes ship as real migrations instead of
+  ever requiring a user to delete their database (rule 62)
+- 53 passing tests (9 new: master-data repository search/pagination, CO line
+  filtering, Alembic stamp/upgrade wiring)
 
 ## Phase 3 — Production / Purchasing / Shipping
 

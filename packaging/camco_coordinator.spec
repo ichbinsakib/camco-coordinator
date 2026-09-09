@@ -19,9 +19,12 @@ a = Analysis(
     binaries=[],
     datas=[
         (str(ROOT / "app" / "ui" / "resources"), "resources"),
+        (str(ROOT / "alembic.ini"), "."),
+        (str(ROOT / "alembic"), "alembic"),
     ],
     hiddenimports=[
         "sqlalchemy.dialects.sqlite",
+        "alembic",
     ],
     hookspath=[],
     runtime_hooks=[],

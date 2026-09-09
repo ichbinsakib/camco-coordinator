@@ -12,7 +12,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-from sqlalchemy import Engine, create_engine, event
+from sqlalchemy import Engine, create_engine, event, inspect
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config.settings import get_settings
@@ -96,15 +96,27 @@ def init_database(database_url: str | None = None, *, echo: bool = False) -> Eng
     """Create all tables on a fresh engine and install it as the process engine.
 
     Safe to call against an existing database: ``create_all`` only creates
-    tables that do not already exist. Schema *changes* to existing tables are
-    handled by Alembic migrations, not by this function.
+    tables that do not already exist. A brand-new database is then stamped at
+    the latest Alembic revision; an existing one not yet tracked by Alembic is
+    stamped in place (its schema already matches, since it came from this
+    same ``create_all``); an existing tracked database is upgraded to head.
+    From that point on, schema *changes* are applied as real Alembic
+    migrations, not by re-running ``create_all``.
     """
     global _engine, _session_factory
     import app.models  # noqa: F401  (registers all mapped classes)
     from app.database.base import Base
+    from app.database.migrations import stamp_head, sync_migration_state
 
     reset_engine()
     _engine = build_engine(database_url, echo=echo)
+
+    is_fresh = not inspect(_engine).get_table_names()
     Base.metadata.create_all(_engine)
+    if is_fresh:
+        stamp_head(_engine)
+    else:
+        sync_migration_state(_engine)
+
     _session_factory = sessionmaker(bind=_engine, expire_on_commit=False, future=True)
     return _engine
