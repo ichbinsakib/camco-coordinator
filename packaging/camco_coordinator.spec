@@ -25,6 +25,8 @@ a = Analysis(
     hiddenimports=[
         "sqlalchemy.dialects.sqlite",
         "alembic",
+        "PySide6.QtCharts",
+        "reportlab.graphics.barcode",
     ],
     hookspath=[],
     runtime_hooks=[],

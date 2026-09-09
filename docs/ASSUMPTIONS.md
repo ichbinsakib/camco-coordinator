@@ -47,3 +47,12 @@ of these is a reasonable default, and every one is reversible through
     number distinct from the CO; `CustomerOrderLine.sales_order_id` and
     `SalesOrder` itself are nullable/optional everywhere so the app is fully
     usable without ever creating a SalesOrder record.
+11. **"Weekly Production Report" folded into existing screens** - spec
+    section 23 lists this alongside the Daily Coordinator Report and others.
+    Rather than build a seventh static, timestamped report that would just
+    restate the live Production page, the workload-by-department chart on
+    the Analytics page and the Production page itself cover the same need
+    with always-current data. If a literal weekly snapshot document turns
+    out to matter for an external audience (e.g. emailing production status
+    to someone without app access), it's a small addition to
+    `app/reports/builders.py` following the existing pattern.

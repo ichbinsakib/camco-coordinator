@@ -109,13 +109,27 @@ what came before (spec rule 62).
   RMA list's Part column with a `DetachedInstanceError` once the session
   closed
 
-## Phase 5 — Dashboard analytics / Reports
+## Phase 5 — Dashboard analytics / Reports ✅ COMPLETE
 
-- Charts: orders by status, past-due trend, production workload, vendor
-  performance, on-time shipment %, RMA aging, monthly trends, bottleneck ops
-- Daily Coordinator Report, Weekly Production Report, Customer Order Report,
-  Vendor Performance Report, On-Time Shipment Report, RMA Aging Report,
-  Management Summary - exportable to Excel/CSV/PDF
+- `app/repositories/analytics.py`: seven aggregate queries, each answering
+  one operational question (spec rule 46) - orders by status, past-due
+  backlog by age, production workload by department, vendor on-time %,
+  RMA aging distribution, monthly order volume, top bottleneck operations
+- Analytics page: a QtCharts bar-chart grid over those seven queries,
+  refreshable on demand
+- `app/reports/`: a format-agnostic `Report`/`ReportSection` model, five
+  builders (Daily Coordinator, Customer Order, Vendor Performance, On-Time
+  Shipment, RMA Aging, Management Summary - six total) that reuse the exact
+  same repositories and business rules as the live pages, and three
+  exporters (Excel via openpyxl - one sheet per section; PDF via reportlab -
+  one styled table per section; CSV - one file per section)
+- Reports page: pick a report, pick a format, generate to the configured
+  report output folder
+- 20 new tests (six analytics-query tests, four report-builder tests, six
+  exporter tests) - 94 passing tests total
+- Weekly Production Report was intentionally folded into the Production
+  page + Analytics workload chart rather than built as a seventh static
+  report - see `docs/ASSUMPTIONS.md` item 11
 
 ## Phase 6 — Excel import/export, advanced validation
 

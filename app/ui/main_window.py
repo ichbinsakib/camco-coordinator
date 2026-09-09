@@ -21,6 +21,7 @@ from app import APP_NAME
 from app.config.settings import SettingsManager
 from app.ui.app_context import AppContext
 from app.ui.pages.alerts_page import AlertsPage
+from app.ui.pages.analytics_page import AnalyticsPage
 from app.ui.pages.customer_orders_page import CustomerOrdersPage
 from app.ui.pages.customers_page import CustomersPage
 from app.ui.pages.dashboard_page import DashboardPage
@@ -29,6 +30,7 @@ from app.ui.pages.parts_page import PartsPage
 from app.ui.pages.placeholder_page import PlaceholderPage
 from app.ui.pages.production_page import ProductionPage
 from app.ui.pages.purchasing_page import PurchasingPage
+from app.ui.pages.reports_page import ReportsPage
 from app.ui.pages.rmas_page import RmasPage
 from app.ui.pages.settings_page import SettingsPage
 from app.ui.pages.shipping_page import ShippingPage
@@ -54,8 +56,6 @@ _NAV_ITEMS: list[tuple[str, str]] = [
     ("search", "Search"),
     ("settings", "Settings"),
 ]
-
-_PHASE_5_MODULES = {"reports", "analytics"}
 
 
 class MainWindow(QMainWindow):
@@ -133,22 +133,17 @@ class MainWindow(QMainWindow):
         self._add_page("followups", FollowUpsPage(self._context))
         self._add_page("customers", CustomersPage(self._context))
         self._add_page("vendors", VendorsPage(self._context))
-        self._add_page("reports", self._placeholder("Reports", "reports"))
-        self._add_page("analytics", self._placeholder("Analytics", "analytics"))
+        self._add_page("reports", ReportsPage(self._context))
+        self._add_page("analytics", AnalyticsPage(self._context))
         self._add_page("alerts", AlertsPage(self._context))
         self._add_page("search", self._placeholder("Search", "search"))
         self._add_page("settings", SettingsPage(self._settings_manager))
 
     def _placeholder(self, title: str, key: str) -> PlaceholderPage:
-        phase = "a later phase"
-        if key in _PHASE_5_MODULES:
-            phase = "Phase 5 (dashboard analytics / reports)"
-        elif key == "search":
-            phase = "a later phase (global search)"
         note = (
-            f"The {title} database schema and repositories are already in place. "
-            f"The list/detail screen for this module is scheduled for {phase} "
-            "of the CAMCO Coordinator roadmap (see docs/ROADMAP.md)."
+            f"Global {title.lower()} across parts, orders, POs, RMAs and follow-ups is planned "
+            "for a later phase of the CAMCO Coordinator roadmap (see docs/ROADMAP.md). "
+            "Each module's own page already supports searching within it."
         )
         return PlaceholderPage(title, note)
 
