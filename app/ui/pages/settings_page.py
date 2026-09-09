@@ -78,6 +78,7 @@ class SettingsPage(QWidget):
         self._build_calendar_tab()
         self._build_priority_alerts_tab()
         self._build_backup_tab()
+        self._build_security_tab()
         self._build_appearance_tab()
 
         button_row = QHBoxLayout()
@@ -205,6 +206,44 @@ class SettingsPage(QWidget):
         layout.addStretch()
         self._tabs.addTab(page, "Backup")
 
+    def _build_security_tab(self) -> None:
+        s = self._manager.settings
+        page = QWidget()
+        form = QFormLayout(page)
+
+        self._session_idle_minutes = QSpinBox()
+        self._session_idle_minutes.setRange(0, 480)
+        self._session_idle_minutes.setSpecialValueText("Disabled")
+        self._session_idle_minutes.setSuffix(" minutes")
+        self._session_idle_minutes.setValue(s.security.session_idle_minutes)
+
+        self._min_password_length = QSpinBox()
+        self._min_password_length.setRange(6, 64)
+        self._min_password_length.setValue(s.security.min_password_length)
+
+        self._max_failed_attempts = QSpinBox()
+        self._max_failed_attempts.setRange(1, 20)
+        self._max_failed_attempts.setValue(s.security.max_failed_attempts)
+
+        self._lockout_minutes = QSpinBox()
+        self._lockout_minutes.setRange(1, 1440)
+        self._lockout_minutes.setValue(s.security.lockout_minutes)
+
+        form.addRow("Lock Screen After Idle", self._session_idle_minutes)
+        note = QLabel(
+            "0 disables the idle lock. When enabled, the app requires your password again "
+            "after this many minutes of no mouse/keyboard activity - the window stays open, "
+            "nothing is lost, it just can't be used until you unlock it. "
+            "Restart the application for a change here to take effect."
+        )
+        note.setObjectName("PageSubtitle")
+        note.setWordWrap(True)
+        form.addRow(note)
+        form.addRow("Minimum Password Length", self._min_password_length)
+        form.addRow("Max Failed Login Attempts", self._max_failed_attempts)
+        form.addRow("Lockout Duration", self._lockout_minutes)
+        self._tabs.addTab(page, "Security")
+
     def _build_appearance_tab(self) -> None:
         s = self._manager.settings
         page = QWidget()
@@ -275,6 +314,13 @@ class SettingsPage(QWidget):
             enabled=self._backup_enabled.isChecked(),
             interval_hours=self._backup_interval.value(),
             retention_days=self._backup_retention.value(),
+        )
+        s.security = replace(
+            s.security,
+            session_idle_minutes=self._session_idle_minutes.value(),
+            min_password_length=self._min_password_length.value(),
+            max_failed_attempts=self._max_failed_attempts.value(),
+            lockout_minutes=self._lockout_minutes.value(),
         )
         s.ui = replace(s.ui, theme=self._theme_combo.currentText())
 

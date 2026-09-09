@@ -161,12 +161,34 @@ what came before (spec rule 62).
   became known; and a per-row commit failure wasn't being counted into the
   batch's reported error total
 
-## Phase 7 — Testing / performance / security hardening
+## Phase 7 — Testing / performance / security hardening ✅ COMPLETE
 
-- Load-test against 100k+ synthetic rows; add indexes/pagination where
-  queries regress
-- Expanded regression suite; `pytest-qt` UI smoke tests
-- Security review of the local auth flow ahead of any future SSO work
+- `tests/performance/test_scale.py`: seeds and queries a 100,000-row
+  dataset (spec rule 30), excluded from the default run (`-m "not slow"`)
+  and runnable on demand with `pytest -m slow tests/performance`. Results
+  and two follow-up findings (deep-page OFFSET cost, unindexed free-text
+  search) written up in `docs/PERFORMANCE.md` - both acceptable at 100k
+  rows today, with a documented fix path if usage outgrows them
+- `pytest-qt` UI tests (`tests/ui/`): drive real dialogs end-to-end rather
+  than only their pure-function backends. These caught two real bugs the
+  pure unit tests couldn't see (Phase 6's mapping-combo rebuild bug and the
+  idle-lock wiring) precisely because they exercise actual Qt signal/slot
+  behavior
+- Security review (`docs/SECURITY.md`): password hashing/lockout,
+  SQL-injection surface (none found - everything goes through SQLAlchemy's
+  parameterized query builder), import-file handling (read-only, no macro
+  execution), and the role-enforcement trust boundary (UI-layer today,
+  documented as needing to move to a service layer before any future
+  multi-user/network deployment)
+- Found and fixed a real gap during the review: `SecuritySettings.session_idle_minutes`
+  existed since Phase 1 but was never enforced. Implemented as
+  `app/ui/idle_lock.py` (pure, unit-tested `IdleTracker` + a thin
+  `IdleWatcher` Qt wrapper) and `LockScreenDialog` (un-dismissible except by
+  re-entering the current user's password), wired into `MainWindow` and
+  exposed on a new Settings > Security tab; off by default so no existing
+  behavior changes
+- 12 new tests (6 idle-lock unit, 2 idle-lock `pytest-qt`, 4 performance) -
+  125 passing tests total (121 default + 4 slow)
 
 ## Phase 8 — EXE packaging / installer / deployment
 

@@ -32,9 +32,12 @@ include = ["app*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q -m 'not slow'"
 filterwarnings = ["error::DeprecationWarning:app.*"]
 qt_api = "pyside6"
+markers = [
+    "slow: performance/scale tests against ~100k rows; excluded by default, run explicitly with `pytest -m slow`",
+]
 
 [tool.ruff]
 line-length = 100

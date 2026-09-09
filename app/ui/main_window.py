@@ -20,6 +20,8 @@ from PySide6.QtWidgets import (
 from app import APP_NAME
 from app.config.settings import SettingsManager
 from app.ui.app_context import AppContext
+from app.ui.dialogs.lock_screen_dialog import LockScreenDialog
+from app.ui.idle_lock import IdleWatcher
 from app.ui.pages.alerts_page import AlertsPage
 from app.ui.pages.analytics_page import AnalyticsPage
 from app.ui.pages.customer_orders_page import CustomerOrdersPage
@@ -88,6 +90,10 @@ class MainWindow(QMainWindow):
 
         self._restore_geometry()
         self._select_page(context.settings.ui.last_page or "dashboard")
+
+        self._idle_watcher = IdleWatcher(context.settings.security.session_idle_minutes, parent=self)
+        self._idle_watcher.locked.connect(self._show_lock_screen)
+        self._idle_watcher.start()
 
     # -- construction -------------------------------------------------
 
@@ -164,6 +170,14 @@ class MainWindow(QMainWindow):
             button.setChecked(True)
         self._context.settings.ui.last_page = key
 
+    # -- idle lock ----------------------------------------------------------
+
+    def _show_lock_screen(self) -> None:
+        with self._context.session_factory() as session:
+            dialog = LockScreenDialog(session, self._context.current_user.username, parent=self)
+            dialog.exec()  # blocks - closeEvent/Escape are disabled, only a successful login accepts it
+        self._idle_watcher.unlock()
+
     # -- window state -----------------------------------------------------
 
     def _restore_geometry(self) -> None:
@@ -172,6 +186,7 @@ class MainWindow(QMainWindow):
             self.restoreGeometry(QByteArray.fromBase64(ui.window_geometry.encode("ascii")))
 
     def closeEvent(self, event) -> None:
+        self._idle_watcher.stop()
         ui = self._context.settings.ui
         if ui.remember_window_geometry:
             ui.window_geometry = bytes(self.saveGeometry().toBase64()).decode("ascii")

@@ -65,3 +65,5 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown of
 - [Database schema](docs/DATABASE.md)
 - [Roadmap / phased implementation plan](docs/ROADMAP.md)
 - [Assumptions made where the spec was ambiguous](docs/ASSUMPTIONS.md)
+- [Performance notes (100k-row benchmarks)](docs/PERFORMANCE.md)
+- [Security review](docs/SECURITY.md)
