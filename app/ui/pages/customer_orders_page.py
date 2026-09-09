@@ -19,6 +19,7 @@ from app.repositories.customer_orders import (
 )
 from app.services.activity_log_service import log_event, log_field_change
 from app.ui.app_context import AppContext
+from app.ui.dialogs.import_wizard_dialog import ImportWizardDialog
 from app.ui.dialogs.notes_dialog import NotesDialog
 from app.ui.dialogs.order_line_dialog import EditOrderLineDialog, NewOrderLineDialog
 from app.ui.widgets.list_page_base import ListPageBase
@@ -71,6 +72,7 @@ class CustomerOrdersPage(ListPageBase):
             self._load,
             can_edit=context.current_user.can_edit,
             show_notes=True,
+            show_import=True,
         )
 
         filter_bar = self.filter_bar_layout()
@@ -87,11 +89,17 @@ class CustomerOrdersPage(ListPageBase):
         self.on_edit = self._edit_line
         self.on_activated = self._edit_line
         self.on_notes = self._view_notes
+        self.on_import = self._import_data
         self.refresh()
 
     def _view_notes(self, row: OrderLineRow) -> None:
         title = f"{row.co_number} / {row.part_display}"
         NotesDialog(self._context, EntityType.CUSTOMER_ORDER_LINE.value, row.line.id, title, parent=self).exec()
+
+    def _import_data(self) -> None:
+        dialog = ImportWizardDialog(self._context, default_target_key="customer_order_lines", parent=self)
+        if dialog.exec() == ImportWizardDialog.DialogCode.Accepted:
+            self.refresh()
 
     def _current_filters(self, text: str) -> OrderLineFilters:
         selection = self._status_filter.currentData()

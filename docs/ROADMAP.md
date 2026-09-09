@@ -131,12 +131,35 @@ what came before (spec rule 62).
   page + Analytics workload chart rather than built as a seventh static
   report - see `docs/ASSUMPTIONS.md` item 11
 
-## Phase 6 — Excel import/export, advanced validation
+## Phase 6 — Excel/CSV import engine ✅ COMPLETE
 
-- Column-mapping import engine (select file -> map columns -> preview ->
-  validate -> confirm -> commit -> log to `import_batches`)
-- Export to Excel/CSV from every major table; PDF for reports
-- Configurable import mapping profiles per source spreadsheet
+- `app/imports/readers.py`: read-only .xlsx/.xlsm/.csv access (source files
+  are never written to, spec rule 55), with best-effort date/number
+  coercion covering both Excel-native and manually-typed values
+- `app/imports/fields.py`: one `ImportTarget` per importable entity -
+  Customers, Vendors, Parts, Customer Order Lines ("master schedule"),
+  Purchase Order Lines - each field typed (text/number/date/enum) and
+  optionally required, with header aliases for auto-mapping
+- `app/imports/engine.py`: `auto_map_columns` (best-guess column mapping by
+  header name), `build_preview` (parses + validates every row, producing
+  plain-language errors like "Row 143: Due Date - 'xyz' is not a valid
+  date", never a raw exception - spec rule 24), `commit_import` (writes
+  valid rows via per-target insert-or-update loaders, wrapped in one
+  `ImportBatch` with row-level `ImportRowError`s logged for anything
+  skipped; each row commits inside its own SAVEPOINT so one bad row can't
+  sink the rest of the batch)
+- `ImportWizardDialog`: file -> sheet -> mapping (auto-filled, adjustable) ->
+  validate/preview (invalid rows highlighted) -> confirm -> commit, wired
+  onto the Customers, Vendors, Parts, Customer Orders and Purchasing pages'
+  toolbars
+- 15 engine/reader tests, 4 `pytest-qt` widget tests exercising the real
+  dialog end-to-end (added `tests/ui/`, first use of the `pytest-qt`
+  dependency declared back in Phase 1) - 113 passing tests total
+- Two real bugs found and fixed via the pytest-qt tests and full-app smoke
+  test (not the pure-function unit tests): the mapping combo boxes were
+  built once before any file was loaded and never rebuilt once headers
+  became known; and a per-row commit failure wasn't being counted into the
+  batch's reported error total
 
 ## Phase 7 — Testing / performance / security hardening
 

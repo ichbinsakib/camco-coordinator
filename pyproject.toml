@@ -34,6 +34,7 @@ include = ["app*"]
 testpaths = ["tests"]
 addopts = "-q"
 filterwarnings = ["error::DeprecationWarning:app.*"]
+qt_api = "pyside6"
 
 [tool.ruff]
 line-length = 100

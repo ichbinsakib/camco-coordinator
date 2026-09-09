@@ -7,8 +7,15 @@ application data and never depend on each other.
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 from pathlib import Path
+
+# pytest-qt widget tests need a display; there usually isn't one in CI or a
+# background shell, so default to Qt's offscreen platform plugin. Set before
+# any Qt import happens (pytest-qt's own plugin imports Qt at collection
+# time), and only if the caller hasn't already chosen a platform.
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
 from sqlalchemy.orm import Session

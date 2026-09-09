@@ -12,6 +12,7 @@ from app.models.core import Customer, Part
 from app.repositories.parts import PartRepository
 from app.services.activity_log_service import log_event, log_field_change
 from app.ui.app_context import AppContext
+from app.ui.dialogs.import_wizard_dialog import ImportWizardDialog
 from app.ui.dialogs.notes_dialog import NotesDialog
 from app.ui.dialogs.part_dialog import PartDialog
 from app.ui.widgets.list_page_base import ListPageBase
@@ -42,16 +43,23 @@ class PartsPage(ListPageBase):
             self._load,
             can_edit=context.current_user.can_edit,
             show_notes=True,
+            show_import=True,
         )
         self.on_new = self._new_part
         self.on_edit = self._edit_part
         self.on_activated = self._edit_part
         self.on_delete = self._delete_part
         self.on_notes = self._view_notes
+        self.on_import = self._import_data
         self.refresh()
 
     def _view_notes(self, row: Part) -> None:
         NotesDialog(self._context, EntityType.PART.value, row.id, row.display_name, parent=self).exec()
+
+    def _import_data(self) -> None:
+        dialog = ImportWizardDialog(self._context, default_target_key="parts", parent=self)
+        if dialog.exec() == ImportWizardDialog.DialogCode.Accepted:
+            self.refresh()
 
     def _load(self, text: str, limit: int, offset: int) -> tuple[list[Part], int]:
         with self._context.session_factory() as session:

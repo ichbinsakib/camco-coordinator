@@ -11,6 +11,7 @@ from app.models.core import Vendor
 from app.repositories.vendors import VendorRepository
 from app.services.activity_log_service import log_event, log_field_change
 from app.ui.app_context import AppContext
+from app.ui.dialogs.import_wizard_dialog import ImportWizardDialog
 from app.ui.dialogs.notes_dialog import NotesDialog
 from app.ui.dialogs.vendor_dialog import VendorDialog
 from app.ui.widgets.list_page_base import ListPageBase
@@ -49,13 +50,20 @@ class VendorsPage(ListPageBase):
             self._load,
             can_edit=context.current_user.can_edit,
             show_notes=True,
+            show_import=True,
         )
         self.on_new = self._new_vendor
         self.on_edit = self._edit_vendor
         self.on_activated = self._edit_vendor
         self.on_delete = self._delete_vendor
         self.on_notes = self._view_notes
+        self.on_import = self._import_data
         self.refresh()
+
+    def _import_data(self) -> None:
+        dialog = ImportWizardDialog(self._context, default_target_key="vendors", parent=self)
+        if dialog.exec() == ImportWizardDialog.DialogCode.Accepted:
+            self.refresh()
 
     def _view_notes(self, row: Vendor) -> None:
         NotesDialog(self._context, EntityType.VENDOR.value, row.id, row.name, parent=self).exec()

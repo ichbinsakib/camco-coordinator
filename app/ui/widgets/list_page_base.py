@@ -49,6 +49,7 @@ class ListPageBase(QWidget):
         page_size: int = 100,
         can_edit: bool = True,
         show_notes: bool = False,
+        show_import: bool = False,
         parent=None,
     ) -> None:
         super().__init__(parent)
@@ -63,6 +64,7 @@ class ListPageBase(QWidget):
         self.on_delete: Callable[[object], None] | None = None
         self.on_activated: Callable[[object], None] | None = None
         self.on_notes: Callable[[object], None] | None = None
+        self.on_import: Callable[[], None] | None = None
 
         root = QVBoxLayout(self)
         root.setContentsMargins(28, 24, 28, 24)
@@ -106,6 +108,11 @@ class ListPageBase(QWidget):
             notes_btn = QPushButton("Notes")
             notes_btn.clicked.connect(self._handle_notes)
             toolbar.addWidget(notes_btn)
+
+        if show_import and can_edit:
+            import_btn = QPushButton("Import…")
+            import_btn.clicked.connect(self._handle_import)
+            toolbar.addWidget(import_btn)
 
         root.addLayout(toolbar)
 
@@ -215,3 +222,7 @@ class ListPageBase(QWidget):
             return
         if self.on_notes:
             self.on_notes(row)
+
+    def _handle_import(self) -> None:
+        if self.on_import:
+            self.on_import()
