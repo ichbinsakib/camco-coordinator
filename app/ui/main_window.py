@@ -1,0 +1,189 @@
+"""Main application window: sidebar navigation + stacked pages."""
+
+from __future__ import annotations
+
+import logging
+
+from PySide6.QtCore import QByteArray
+from PySide6.QtWidgets import (
+    QButtonGroup,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QStackedWidget,
+    QStatusBar,
+    QVBoxLayout,
+    QWidget,
+)
+
+from app import APP_NAME
+from app.config.settings import SettingsManager
+from app.ui.app_context import AppContext
+from app.ui.pages.dashboard_page import DashboardPage
+from app.ui.pages.placeholder_page import PlaceholderPage
+from app.ui.pages.settings_page import SettingsPage
+
+log = logging.getLogger(__name__)
+
+#: (page key, sidebar label) in the order specified for the sidebar.
+_NAV_ITEMS: list[tuple[str, str]] = [
+    ("dashboard", "Dashboard"),
+    ("customer_orders", "Customer Orders"),
+    ("parts", "Parts"),
+    ("production", "Production"),
+    ("purchasing", "Purchasing"),
+    ("shipping", "Shipping"),
+    ("rmas", "RMAs"),
+    ("followups", "Follow-Ups"),
+    ("customers", "Customers"),
+    ("vendors", "Vendors"),
+    ("reports", "Reports"),
+    ("analytics", "Analytics"),
+    ("alerts", "Alerts"),
+    ("search", "Search"),
+    ("settings", "Settings"),
+]
+
+_PHASE_2_MODULES = {"customer_orders", "parts", "customers", "vendors"}
+_PHASE_3_MODULES = {"production", "purchasing", "shipping"}
+_PHASE_4_MODULES = {"rmas", "followups", "alerts"}
+_PHASE_5_MODULES = {"reports", "analytics"}
+
+
+class MainWindow(QMainWindow):
+    """Top-level window: title bar, sidebar, and the stack of pages."""
+
+    def __init__(self, context: AppContext, settings_manager: SettingsManager) -> None:
+        super().__init__()
+        self._context = context
+        self._settings_manager = settings_manager
+        self.setWindowTitle(f"{APP_NAME} — {context.current_user.display_name}")
+        self.resize(1280, 800)
+
+        central = QWidget()
+        self.setCentralWidget(central)
+        root_layout = QHBoxLayout(central)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+
+        root_layout.addWidget(self._build_sidebar())
+
+        self._stack = QStackedWidget()
+        root_layout.addWidget(self._stack, stretch=1)
+        self._page_index: dict[str, int] = {}
+        self._build_pages()
+
+        self.setStatusBar(QStatusBar())
+        self.statusBar().showMessage(
+            f"Signed in as {context.current_user.display_name} ({context.current_user.role})"
+        )
+
+        self._restore_geometry()
+        self._select_page(context.settings.ui.last_page or "dashboard")
+
+    # -- construction -------------------------------------------------
+
+    def _build_sidebar(self) -> QWidget:
+        sidebar = QWidget()
+        sidebar.setObjectName("Sidebar")
+        layout = QVBoxLayout(sidebar)
+        layout.setContentsMargins(0, 8, 0, 12)
+        layout.setSpacing(2)
+
+        title = QLabel(APP_NAME)
+        title.setObjectName("SidebarTitle")
+        subtitle = QLabel("Manufacturing Coordination")
+        subtitle.setObjectName("SidebarSubtitle")
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+
+        self._nav_group = QButtonGroup(self)
+        self._nav_group.setExclusive(True)
+        self._nav_buttons: dict[str, QPushButton] = {}
+
+        for key, label in _NAV_ITEMS:
+            button = QPushButton(label)
+            button.setCheckable(True)
+            button.clicked.connect(lambda _checked, k=key: self._select_page(k))
+            self._nav_group.addButton(button)
+            self._nav_buttons[key] = button
+            layout.addWidget(button)
+            if key == "search":
+                layout.addSpacing(8)
+
+        layout.addStretch()
+        return sidebar
+
+    def _build_pages(self) -> None:
+        self._add_page("dashboard", DashboardPage(self._context))
+        self._add_page(
+            "customer_orders",
+            self._placeholder("Customer Orders", "customer_orders"),
+        )
+        self._add_page("parts", self._placeholder("Parts", "parts"))
+        self._add_page("production", self._placeholder("Production", "production"))
+        self._add_page("purchasing", self._placeholder("Purchasing", "purchasing"))
+        self._add_page("shipping", self._placeholder("Shipping", "shipping"))
+        self._add_page("rmas", self._placeholder("RMAs", "rmas"))
+        self._add_page("followups", self._placeholder("Follow-Ups", "followups"))
+        self._add_page("customers", self._placeholder("Customers", "customers"))
+        self._add_page("vendors", self._placeholder("Vendors", "vendors"))
+        self._add_page("reports", self._placeholder("Reports", "reports"))
+        self._add_page("analytics", self._placeholder("Analytics", "analytics"))
+        self._add_page("alerts", self._placeholder("Alerts", "alerts"))
+        self._add_page("search", self._placeholder("Search", "search"))
+        self._add_page("settings", SettingsPage(self._settings_manager))
+
+    def _placeholder(self, title: str, key: str) -> PlaceholderPage:
+        phase = "a later phase"
+        if key in _PHASE_2_MODULES:
+            phase = "Phase 2 (core records)"
+        elif key in _PHASE_3_MODULES:
+            phase = "Phase 3 (production / purchasing / shipping)"
+        elif key in _PHASE_4_MODULES:
+            phase = "Phase 4 (RMA, follow-ups, alerts)"
+        elif key in _PHASE_5_MODULES:
+            phase = "Phase 5 (dashboard analytics / reports)"
+        elif key == "search":
+            phase = "a later phase (global search)"
+        note = (
+            f"The {title} database schema and repositories are already in place. "
+            f"The list/detail screen for this module is scheduled for {phase} "
+            "of the CAMCO Coordinator roadmap (see docs/ROADMAP.md)."
+        )
+        return PlaceholderPage(title, note)
+
+    def _add_page(self, key: str, widget: QWidget) -> None:
+        index = self._stack.addWidget(widget)
+        self._page_index[key] = index
+
+    # -- navigation -----------------------------------------------------
+
+    def _select_page(self, key: str) -> None:
+        index = self._page_index.get(key)
+        if index is None:
+            log.warning("Unknown page requested: %s", key)
+            return
+        self._stack.setCurrentIndex(index)
+        button = self._nav_buttons.get(key)
+        if button is not None:
+            button.setChecked(True)
+        self._context.settings.ui.last_page = key
+
+    # -- window state -----------------------------------------------------
+
+    def _restore_geometry(self) -> None:
+        ui = self._context.settings.ui
+        if ui.remember_window_geometry and ui.window_geometry:
+            self.restoreGeometry(QByteArray.fromBase64(ui.window_geometry.encode("ascii")))
+
+    def closeEvent(self, event) -> None:
+        ui = self._context.settings.ui
+        if ui.remember_window_geometry:
+            ui.window_geometry = bytes(self.saveGeometry().toBase64()).decode("ascii")
+        try:
+            self._settings_manager.save(self._context.settings)
+        except OSError:
+            log.exception("Could not save settings on close")
+        super().closeEvent(event)

@@ -1,0 +1,20 @@
+# CAMCO Coordinator - runtime dependencies
+# Pinned to minimum-known-good versions; upper bounds avoid surprise major bumps.
+
+# --- UI ---------------------------------------------------------------------
+PySide6>=6.9,<7.0
+
+# --- Persistence ------------------------------------------------------------
+SQLAlchemy>=2.0.30,<3.0
+alembic>=1.13,<2.0
+
+# --- Excel / data -----------------------------------------------------------
+openpyxl>=3.1,<4.0
+pandas>=2.2,<3.0
+
+# --- Reporting --------------------------------------------------------------
+reportlab>=4.1,<5.0
+
+# --- Platform support -------------------------------------------------------
+# Windows has no system IANA tz database; zoneinfo needs this.
+tzdata>=2024.1
