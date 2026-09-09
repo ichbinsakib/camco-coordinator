@@ -20,13 +20,16 @@ from PySide6.QtWidgets import (
 from app import APP_NAME
 from app.config.settings import SettingsManager
 from app.ui.app_context import AppContext
+from app.ui.pages.alerts_page import AlertsPage
 from app.ui.pages.customer_orders_page import CustomerOrdersPage
 from app.ui.pages.customers_page import CustomersPage
 from app.ui.pages.dashboard_page import DashboardPage
+from app.ui.pages.followups_page import FollowUpsPage
 from app.ui.pages.parts_page import PartsPage
 from app.ui.pages.placeholder_page import PlaceholderPage
 from app.ui.pages.production_page import ProductionPage
 from app.ui.pages.purchasing_page import PurchasingPage
+from app.ui.pages.rmas_page import RmasPage
 from app.ui.pages.settings_page import SettingsPage
 from app.ui.pages.shipping_page import ShippingPage
 from app.ui.pages.vendors_page import VendorsPage
@@ -52,7 +55,6 @@ _NAV_ITEMS: list[tuple[str, str]] = [
     ("settings", "Settings"),
 ]
 
-_PHASE_4_MODULES = {"rmas", "followups", "alerts"}
 _PHASE_5_MODULES = {"reports", "analytics"}
 
 
@@ -127,21 +129,19 @@ class MainWindow(QMainWindow):
         self._add_page("production", ProductionPage(self._context))
         self._add_page("purchasing", PurchasingPage(self._context))
         self._add_page("shipping", ShippingPage(self._context))
-        self._add_page("rmas", self._placeholder("RMAs", "rmas"))
-        self._add_page("followups", self._placeholder("Follow-Ups", "followups"))
+        self._add_page("rmas", RmasPage(self._context))
+        self._add_page("followups", FollowUpsPage(self._context))
         self._add_page("customers", CustomersPage(self._context))
         self._add_page("vendors", VendorsPage(self._context))
         self._add_page("reports", self._placeholder("Reports", "reports"))
         self._add_page("analytics", self._placeholder("Analytics", "analytics"))
-        self._add_page("alerts", self._placeholder("Alerts", "alerts"))
+        self._add_page("alerts", AlertsPage(self._context))
         self._add_page("search", self._placeholder("Search", "search"))
         self._add_page("settings", SettingsPage(self._settings_manager))
 
     def _placeholder(self, title: str, key: str) -> PlaceholderPage:
         phase = "a later phase"
-        if key in _PHASE_4_MODULES:
-            phase = "Phase 4 (RMA, follow-ups, alerts)"
-        elif key in _PHASE_5_MODULES:
+        if key in _PHASE_5_MODULES:
             phase = "Phase 5 (dashboard analytics / reports)"
         elif key == "search":
             phase = "a later phase (global search)"

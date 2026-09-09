@@ -78,15 +78,36 @@ what came before (spec rule 62).
   threshold, late-PO filtering, on-time-% with on-time/late/unknown lines,
   every standard date-range calculation) - 67 passing tests total
 
-## Phase 4 — RMA / Follow-ups / Alerts / Notes
+## Phase 4 — RMA / Follow-ups / Alerts / Notes ✅ COMPLETE
 
-- RMA module with month-based aging buckets
-- Follow-up management (subject, related records, communication method,
-  next-follow-up date)
-- Alert engine (`app/alerts/`) built on the same business rules as the
-  dashboard/priority engine - past due, upcoming, material, vendor,
-  production-stagnation alerts, with acknowledge/snooze/resolve
-- Notes UI on every entity detail page
+- `RmaRepository`: search/filter plus `aging_bucket_label()` - RMA age is
+  always shown in months against the configurable bucket edges in
+  `RmaSettings.aging_buckets_months` (spec section 17), never raw days
+- `FollowUpRepository`: search/filter with an overdue-only view
+- RMAs and Follow-Ups pages: full CRUD, closing an RMA/follow-up
+  auto-stamps its completion/last-contacted date
+- Alert engine (`app/alerts/`): `rules.py` holds pure rule functions (past
+  due, due soon, material shortage, late PO, stagnant production operation,
+  overdue follow-up) over the *same* business logic the dashboard and
+  priority engine use - `engine.py` reconciles rule output against the
+  `alerts` table (create new, update in place, leave snoozed alone,
+  auto-resolve when the underlying condition clears - never a duplicate
+  alert for the same condition)
+- Alerts page: severity filter, "Refresh Alerts" to run the engine on
+  demand, Acknowledge / Snooze (configurable days) / Resolve
+- Notes: one reusable `NotesDialog` (spec rule 22) wired onto every list
+  page that has an entity worth annotating - Parts, Customers, Vendors,
+  Customer Order lines, Purchase Order lines, RMAs, Follow-Ups - rather than
+  a bespoke notes UI per page
+- 13 new tests (RMA aging-bucket boundaries, follow-up overdue filtering,
+  and 8 alert-engine tests covering creation, severity escalation,
+  idempotent re-runs, auto-resolution, snooze protection, the
+  enabled/disabled switch, and the material-shortage rule) - 80 passing
+  tests total
+- Bug caught by the full-app smoke test (not the unit suite) and fixed:
+  `RmaRepository.search` wasn't eager-loading `Rma.part`, which crashed the
+  RMA list's Part column with a `DetachedInstanceError` once the session
+  closed
 
 ## Phase 5 — Dashboard analytics / Reports
 

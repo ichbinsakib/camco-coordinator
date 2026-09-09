@@ -7,7 +7,7 @@ import logging
 from PySide6.QtWidgets import QComboBox, QLabel, QMessageBox
 from sqlalchemy import select
 
-from app.config.constants import OrderStatus
+from app.config.constants import EntityType, OrderStatus
 from app.config.settings import get_settings
 from app.models.core import Customer, Part
 from app.models.orders import CustomerOrderLine
@@ -19,6 +19,7 @@ from app.repositories.customer_orders import (
 )
 from app.services.activity_log_service import log_event, log_field_change
 from app.ui.app_context import AppContext
+from app.ui.dialogs.notes_dialog import NotesDialog
 from app.ui.dialogs.order_line_dialog import EditOrderLineDialog, NewOrderLineDialog
 from app.ui.widgets.list_page_base import ListPageBase
 from app.ui.widgets.table_model import ColumnSpec
@@ -69,6 +70,7 @@ class CustomerOrdersPage(ListPageBase):
             _COLUMNS,
             self._load,
             can_edit=context.current_user.can_edit,
+            show_notes=True,
         )
 
         filter_bar = self.filter_bar_layout()
@@ -84,7 +86,12 @@ class CustomerOrdersPage(ListPageBase):
         self.on_new = self._new_line
         self.on_edit = self._edit_line
         self.on_activated = self._edit_line
+        self.on_notes = self._view_notes
         self.refresh()
+
+    def _view_notes(self, row: OrderLineRow) -> None:
+        title = f"{row.co_number} / {row.part_display}"
+        NotesDialog(self._context, EntityType.CUSTOMER_ORDER_LINE.value, row.line.id, title, parent=self).exec()
 
     def _current_filters(self, text: str) -> OrderLineFilters:
         selection = self._status_filter.currentData()

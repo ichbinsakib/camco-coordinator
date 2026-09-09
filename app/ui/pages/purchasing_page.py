@@ -7,7 +7,7 @@ import logging
 from PySide6.QtWidgets import QCheckBox, QComboBox, QLabel, QMessageBox
 from sqlalchemy import select
 
-from app.config.constants import PurchaseOrderStatus
+from app.config.constants import EntityType, PurchaseOrderStatus
 from app.models.core import Part, Vendor
 from app.models.purchasing import PurchaseOrderLine
 from app.repositories.purchasing import (
@@ -18,6 +18,7 @@ from app.repositories.purchasing import (
 )
 from app.services.activity_log_service import log_event, log_field_change
 from app.ui.app_context import AppContext
+from app.ui.dialogs.notes_dialog import NotesDialog
 from app.ui.dialogs.purchase_line_dialog import EditPurchaseLineDialog, NewPurchaseLineDialog
 from app.ui.widgets.list_page_base import ListPageBase
 from app.ui.widgets.table_model import ColumnSpec
@@ -55,6 +56,7 @@ class PurchasingPage(ListPageBase):
             _COLUMNS,
             self._load,
             can_edit=context.current_user.can_edit,
+            show_notes=True,
         )
 
         filter_bar = self.filter_bar_layout()
@@ -74,7 +76,12 @@ class PurchasingPage(ListPageBase):
         self.on_new = self._new_line
         self.on_edit = self._edit_line
         self.on_activated = self._edit_line
+        self.on_notes = self._view_notes
         self.refresh()
+
+    def _view_notes(self, row: PurchaseLineRow) -> None:
+        title = f"{row.po_number} / {row.part_display}"
+        NotesDialog(self._context, EntityType.PURCHASE_ORDER_LINE.value, row.line.id, title, parent=self).exec()
 
     def _current_filters(self, text: str) -> PurchaseLineFilters:
         selection = self._status_filter.currentData()

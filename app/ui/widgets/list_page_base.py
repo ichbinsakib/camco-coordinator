@@ -48,6 +48,7 @@ class ListPageBase(QWidget):
         *,
         page_size: int = 100,
         can_edit: bool = True,
+        show_notes: bool = False,
         parent=None,
     ) -> None:
         super().__init__(parent)
@@ -61,6 +62,7 @@ class ListPageBase(QWidget):
         self.on_edit: Callable[[object], None] | None = None
         self.on_delete: Callable[[object], None] | None = None
         self.on_activated: Callable[[object], None] | None = None
+        self.on_notes: Callable[[object], None] | None = None
 
         root = QVBoxLayout(self)
         root.setContentsMargins(28, 24, 28, 24)
@@ -99,6 +101,11 @@ class ListPageBase(QWidget):
             delete_btn = QPushButton("Delete")
             delete_btn.clicked.connect(self._handle_delete)
             toolbar.addWidget(delete_btn)
+
+        if show_notes:
+            notes_btn = QPushButton("Notes")
+            notes_btn.clicked.connect(self._handle_notes)
+            toolbar.addWidget(notes_btn)
 
         root.addLayout(toolbar)
 
@@ -200,3 +207,11 @@ class ListPageBase(QWidget):
         row = self.selected_row()
         if row is not None and self.on_activated:
             self.on_activated(row)
+
+    def _handle_notes(self) -> None:
+        row = self.selected_row()
+        if row is None:
+            QMessageBox.information(self, "No Selection", "Select a row to view notes first.")
+            return
+        if self.on_notes:
+            self.on_notes(row)

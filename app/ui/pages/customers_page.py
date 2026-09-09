@@ -6,11 +6,13 @@ import logging
 
 from PySide6.QtWidgets import QMessageBox
 
+from app.config.constants import EntityType
 from app.models.core import Customer
 from app.repositories.customers import CustomerRepository
 from app.services.activity_log_service import log_event, log_field_change
 from app.ui.app_context import AppContext
 from app.ui.dialogs.customer_dialog import CustomerDialog
+from app.ui.dialogs.notes_dialog import NotesDialog
 from app.ui.widgets.list_page_base import ListPageBase
 from app.ui.widgets.table_model import ColumnSpec
 
@@ -45,12 +47,17 @@ class CustomersPage(ListPageBase):
             _COLUMNS,
             self._load,
             can_edit=context.current_user.can_edit,
+            show_notes=True,
         )
         self.on_new = self._new_customer
         self.on_edit = self._edit_customer
         self.on_activated = self._edit_customer
         self.on_delete = self._delete_customer
+        self.on_notes = self._view_notes
         self.refresh()
+
+    def _view_notes(self, row: Customer) -> None:
+        NotesDialog(self._context, EntityType.CUSTOMER.value, row.id, row.name, parent=self).exec()
 
     def _load(self, text: str, limit: int, offset: int) -> tuple[list[Customer], int]:
         with self._context.session_factory() as session:
