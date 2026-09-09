@@ -54,12 +54,29 @@ what came before (spec rule 62).
 - 53 passing tests (9 new: master-data repository search/pagination, CO line
   filtering, Alembic stamp/upgrade wiring)
 
-## Phase 3 — Production / Purchasing / Shipping
+## Phase 3 — Production / Purchasing / Shipping ✅ COMPLETE
 
-- Production order + routing operation UI (current-operation view, OP10..OPnn)
-- Purchasing UI: PO list, late-PO view, vendor follow-up list
-- Shipping UI: shipment entry, on-time-% calculation with configurable
-  historical ranges (current month, prior month, 3/6/12/24/36/48/60 months)
+- Repositories: `ProductionOrderRepository` (resolves each order's *current*
+  operation - the first not-yet-complete routing step - plus
+  `stagnant_operations()` for the alert engine in Phase 4),
+  `PurchaseOrderRepository` (line-level search/filter, late-only), and
+  `ShipmentRepository` (line-level search plus `on_time_percentage()` over a
+  date range)
+- Production page: list of production orders showing current operation, its
+  status, and days-in-status; "Manage Operations" dialog to add/edit/delete
+  routing steps (OP10, OP20, ...) - `status_since` resets automatically
+  whenever an operation's status changes, which is what "days in status"
+  measures
+- Purchasing page: line-level worklist (PO/vendor/part/qty/dates/days
+  late/buyer) with status and Late-Only filters - the vendor follow-up list
+  the spec asks for
+- Shipping page: shipment list plus an on-time-% analytics panel with a
+  range picker (current/previous month, 3/6/12/24/36/48/60 months, spec
+  section 16); adding a shipment line auto-transitions the customer order
+  line to SHIPPED once its full ordered quantity has gone out
+- 14 new repository tests (current-operation resolution, stagnation
+  threshold, late-PO filtering, on-time-% with on-time/late/unknown lines,
+  every standard date-range calculation) - 67 passing tests total
 
 ## Phase 4 — RMA / Follow-ups / Alerts / Notes
 

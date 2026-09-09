@@ -25,7 +25,10 @@ from app.ui.pages.customers_page import CustomersPage
 from app.ui.pages.dashboard_page import DashboardPage
 from app.ui.pages.parts_page import PartsPage
 from app.ui.pages.placeholder_page import PlaceholderPage
+from app.ui.pages.production_page import ProductionPage
+from app.ui.pages.purchasing_page import PurchasingPage
 from app.ui.pages.settings_page import SettingsPage
+from app.ui.pages.shipping_page import ShippingPage
 from app.ui.pages.vendors_page import VendorsPage
 
 log = logging.getLogger(__name__)
@@ -49,7 +52,6 @@ _NAV_ITEMS: list[tuple[str, str]] = [
     ("settings", "Settings"),
 ]
 
-_PHASE_3_MODULES = {"production", "purchasing", "shipping"}
 _PHASE_4_MODULES = {"rmas", "followups", "alerts"}
 _PHASE_5_MODULES = {"reports", "analytics"}
 
@@ -122,9 +124,9 @@ class MainWindow(QMainWindow):
         self._add_page("dashboard", DashboardPage(self._context))
         self._add_page("customer_orders", CustomerOrdersPage(self._context))
         self._add_page("parts", PartsPage(self._context))
-        self._add_page("production", self._placeholder("Production", "production"))
-        self._add_page("purchasing", self._placeholder("Purchasing", "purchasing"))
-        self._add_page("shipping", self._placeholder("Shipping", "shipping"))
+        self._add_page("production", ProductionPage(self._context))
+        self._add_page("purchasing", PurchasingPage(self._context))
+        self._add_page("shipping", ShippingPage(self._context))
         self._add_page("rmas", self._placeholder("RMAs", "rmas"))
         self._add_page("followups", self._placeholder("Follow-Ups", "followups"))
         self._add_page("customers", CustomersPage(self._context))
@@ -137,9 +139,7 @@ class MainWindow(QMainWindow):
 
     def _placeholder(self, title: str, key: str) -> PlaceholderPage:
         phase = "a later phase"
-        if key in _PHASE_3_MODULES:
-            phase = "Phase 3 (production / purchasing / shipping)"
-        elif key in _PHASE_4_MODULES:
+        if key in _PHASE_4_MODULES:
             phase = "Phase 4 (RMA, follow-ups, alerts)"
         elif key in _PHASE_5_MODULES:
             phase = "Phase 5 (dashboard analytics / reports)"
