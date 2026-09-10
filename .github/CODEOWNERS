@@ -1,0 +1,12 @@
+# Code owners for CAMCO Coordinator.
+#
+# These owners are requested for review on pull requests that touch the
+# matching paths. Branch protection currently requires 0 approvals to merge
+# (see CONTRIBUTING.md), so this drives review *requests*, not a merge gate,
+# until that's tightened.
+#
+# Order matters: later patterns override earlier ones for the same path,
+# matching git's own gitignore-style precedence.
+
+# Default owner for everything in the repo.
+* @ichbinsakib
