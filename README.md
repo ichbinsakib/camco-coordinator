@@ -1,5 +1,11 @@
 # CAMCO Coordinator
 
+![Python](https://img.shields.io/badge/python-3.12%2B-blue)
+![PySide6](https://img.shields.io/badge/UI-PySide6%20%28Qt%29-41cd52)
+![Platform](https://img.shields.io/badge/platform-Windows-0078D6)
+![Tests](https://img.shields.io/badge/tests-149%20passing-brightgreen)
+![Status](https://img.shields.io/badge/phases-1--9%20complete-success)
+
 A Windows desktop application for manufacturing coordination and expediting
 at CAMCO Manufacturing: one place to see what's late, what's due, what's
 waiting on someone else, and what needs a phone call today.
