@@ -57,3 +57,40 @@ def test_running_alembic_does_not_disable_the_app_loggers(tmp_path: Path) -> Non
         )
     finally:
         reset_engine()
+
+
+def test_running_alembic_does_not_replace_the_root_handlers(tmp_path: Path) -> None:
+    """Regression test: fileConfig() must not silently drop the app's log handlers either.
+
+    disable_existing_loggers=False (see the test above) only stops loggers
+    from being *disabled* - fileConfig() unconditionally replaces the root
+    logger's *handler list* with whatever alembic.ini defines, regardless of
+    that flag. That's the actual reason the first-run admin password never
+    reached the persisted log file even after the disabled-loggers fix: the
+    WARNING call still executed, but the RotatingFileHandler the app
+    attached to the root logger was gone. This asserts a record actually
+    reaches a handler the app installed before init_database() ran.
+    """
+    root_logger = logging.getLogger()
+    records: list[logging.LogRecord] = []
+
+    class _CapturingHandler(logging.Handler):
+        def emit(self, record: logging.LogRecord) -> None:
+            records.append(record)
+
+    probe_handler = _CapturingHandler()
+    root_logger.addHandler(probe_handler)
+    try:
+        db_url = f"sqlite:///{(tmp_path / 'logging_handlers_check.db').as_posix()}"
+        init_database(db_url)
+        try:
+            logging.getLogger("app.security.auth").warning("probe message after alembic ran")
+            assert any(r.getMessage() == "probe message after alembic ran" for r in records), (
+                "A log record emitted after init_database() never reached a handler "
+                "the application installed beforehand - Alembic's fileConfig() replaced "
+                "the root logger's handlers."
+            )
+        finally:
+            reset_engine()
+    finally:
+        root_logger.handlers = [h for h in root_logger.handlers if h is not probe_handler]

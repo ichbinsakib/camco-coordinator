@@ -17,3 +17,4 @@ reports/*.xlsx
 reports/*.pdf
 *.egg-info/
 .dev_home*/
+.claude/
