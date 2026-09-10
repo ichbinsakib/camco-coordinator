@@ -19,7 +19,15 @@ from app.database.base import Base
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # disable_existing_loggers defaults to True, which silently disables
+    # every logger the *running application* already configured (including
+    # the one that logs the first-run admin password - a real bug this
+    # caught: it printed nowhere, file or console, once init_database()
+    # ran Alembic). We already own logging setup end-to-end
+    # (app/utils/logging_setup.py); this call only needs to exist for
+    # alembic.ini's formatting when Alembic is run standalone from a
+    # terminal, so it must never disable loggers that already exist.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 
