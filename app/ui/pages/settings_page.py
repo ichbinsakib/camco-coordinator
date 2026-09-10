@@ -35,10 +35,16 @@ log = logging.getLogger(__name__)
 
 
 class _FolderRow(QWidget):
-    """A path text field with a Browse button, used repeatedly on this page."""
+    """A path text field with a Browse button, used repeatedly on this page.
 
-    def __init__(self, initial: str, parent=None) -> None:
+    ``is_file=True`` switches the Browse button from a folder picker to a
+    file picker - used only for the Database File row, which needs a
+    specific filename (local or on a shared network path), not a directory.
+    """
+
+    def __init__(self, initial: str, parent=None, *, is_file: bool = False) -> None:
         super().__init__(parent)
+        self._is_file = is_file
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self.edit = QLineEdit(initial)
@@ -48,6 +54,19 @@ class _FolderRow(QWidget):
         layout.addWidget(browse)
 
     def _browse(self) -> None:
+        if self._is_file:
+            # getSaveFileName (not getOpenFileName) because the target file
+            # may not exist yet - e.g. the very first coordinator pointing
+            # everyone at a brand-new shared database file. Navigating to
+            # and selecting an *existing* file works the same way; picking
+            # it here does not create or overwrite anything by itself, only
+            # the app's next connection does (creating it fresh if absent).
+            path, _filter = QFileDialog.getSaveFileName(
+                self, "Select or Create Database File", self.edit.text() or "", "SQLite Database (*.db)"
+            )
+            if path:
+                self.edit.setText(path)
+            return
         directory = QFileDialog.getExistingDirectory(self, "Select Folder", self.edit.text() or "")
         if directory:
             self.edit.setText(directory)
@@ -108,7 +127,7 @@ class SettingsPage(QWidget):
         s = self._manager.settings
         page = QWidget()
         form = QFormLayout(page)
-        self._db_file = _FolderRow(str(s.paths.database_file))
+        self._db_file = _FolderRow(str(s.paths.database_file), is_file=True)
         self._backup_dir = _FolderRow(str(s.paths.backup_dir))
         self._report_dir = _FolderRow(str(s.paths.report_output_dir))
         self._master_schedule = _FolderRow(str(s.paths.master_schedule_folder))
@@ -117,6 +136,17 @@ class SettingsPage(QWidget):
         self._production = _FolderRow(str(s.paths.production_folder))
         self._shipping = _FolderRow(str(s.paths.shipping_folder))
         form.addRow("Database File (blank = default)", self._db_file)
+        db_note = QLabel(
+            "Point this at a shared network path (e.g. \\\\SERVER\\CAMCO\\camco_coordinator.db) so "
+            "multiple coordinators' installs use the same live data. The app automatically switches to "
+            "a network-safe SQLite mode when it detects a network path - but SQLite itself only "
+            "recommends this for light/occasional concurrent use, not heavy simultaneous editing by "
+            "many people at once. See docs/NETWORK_SHARE.md before relying on this for real production "
+            "use. Every install must point at the exact same file, and restart after changing this."
+        )
+        db_note.setObjectName("PageSubtitle")
+        db_note.setWordWrap(True)
+        form.addRow(db_note)
         form.addRow("Backup Folder (blank = default)", self._backup_dir)
         form.addRow("Report Output Folder (blank = default)", self._report_dir)
         form.addRow("Master Schedule Folder", self._master_schedule)

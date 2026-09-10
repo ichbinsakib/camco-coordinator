@@ -16,6 +16,7 @@ from sqlalchemy import Engine, create_engine, event, inspect
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config.settings import get_settings
+from app.utils.network_paths import is_network_path
 
 log = logging.getLogger(__name__)
 
@@ -26,6 +27,33 @@ _session_factory: sessionmaker[Session] | None = None
 def _sqlite_url(db_path: Path) -> str:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     return f"sqlite:///{db_path.as_posix()}"
+
+
+def _sqlite_journal_mode(database_url: str) -> str:
+    """Pick a journal mode that's actually safe for where the database lives.
+
+    WAL needs shared-memory-mapped files, which most network filesystems
+    (SMB shares in particular) don't implement safely - SQLite's own docs
+    warn against WAL over a network share. A database configured onto a
+    network path (the "shared drive" deployment option - see
+    docs/NETWORK_SHARE.md) instead uses the traditional rollback journal
+    (DELETE mode), which SQLite explicitly recommends for that case. Every
+    other case (the normal local-file deployment) keeps WAL for its better
+    local read/write concurrency and performance.
+    """
+    if not database_url.startswith("sqlite:///"):
+        return "WAL"
+    raw_path = database_url.removeprefix("sqlite:///")
+    if raw_path == ":memory:":
+        return "WAL"
+    if is_network_path(Path(raw_path)):
+        log.warning(
+            "Database path %s looks like a network location - using DELETE journal mode "
+            "instead of WAL (see docs/NETWORK_SHARE.md for the tradeoffs of this deployment option)",
+            raw_path,
+        )
+        return "DELETE"
+    return "WAL"
 
 
 def build_engine(database_url: str | None = None, *, echo: bool = False) -> Engine:
@@ -40,12 +68,13 @@ def build_engine(database_url: str | None = None, *, echo: bool = False) -> Engi
     engine = create_engine(database_url, echo=echo, future=True)
 
     if database_url.startswith("sqlite"):
+        journal_mode = _sqlite_journal_mode(database_url)
 
         @event.listens_for(engine, "connect")
         def _set_sqlite_pragmas(dbapi_connection, _connection_record) -> None:
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
-            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute(f"PRAGMA journal_mode={journal_mode}")
             cursor.execute("PRAGMA synchronous=NORMAL")
             cursor.close()
 
