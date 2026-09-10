@@ -49,6 +49,14 @@ def stylesheet(theme: str, accent: str = "#0F62FE") -> str:
         min-width: 220px;
         max-width: 220px;
     }}
+    /* The global "QWidget {{ background: ... }}" rule above paints every
+       widget's own background, including labels that sit directly on the
+       dark sidebar - without this, #SidebarTitle/#SidebarSubtitle each
+       render a light rectangle from the app's default background color,
+       punching a hard-to-read patch through the sidebar behind their text. */
+    #Sidebar QLabel {{
+        background: transparent;
+    }}
     #Sidebar QPushButton {{
         color: {palette['sidebar_text']};
         background: transparent;
