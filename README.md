@@ -8,11 +8,24 @@ Built with Python 3.12+, PySide6 (Qt), and SQLAlchemy over SQLite.
 
 ## Status
 
-**Phase 1 complete.** The application shell, database schema, settings
-system, logging, local authentication, backup/restore, and the dashboard KPI
-engine are implemented and tested. See [docs/ROADMAP.md](docs/ROADMAP.md) for
-what ships in each subsequent phase, and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-for how it's put together.
+**All 9 phases complete.** The full coordination workflow is built, tested
+and packaged: application shell, database schema, settings, local auth
+(with idle-timeout lock), the dashboard/priority/alert engines, full CRUD
+across Customer Orders, Parts, Production, Purchasing, Shipping, RMAs,
+Follow-Ups, Customers and Vendors, Excel/CSV import, analytics charts, a
+six-report export engine (Excel/PDF/CSV), a built-and-smoke-tested
+Windows executable, and optional AI Insights (delivery-risk prediction,
+recurring-bottleneck detection, natural-language search - off by default).
+145 automated tests pass (`pytest`), plus a 100k-row performance suite
+(`pytest -m slow tests/performance`).
+
+Two Phase 8 items remain, both needing tools this dev environment doesn't
+have: verifying the `.exe` on a clean Windows machine with no Python
+installed, and compiling the Inno Setup installer. See
+[docs/PACKAGING.md](docs/PACKAGING.md).
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for what shipped in each phase, and
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how it's put together.
 
 ## Quick start (development)
 
@@ -68,3 +81,4 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown of
 - [Performance notes (100k-row benchmarks)](docs/PERFORMANCE.md)
 - [Security review](docs/SECURITY.md)
 - [Packaging (EXE build, installer)](docs/PACKAGING.md)
+- [AI / Machine Learning (optional, off by default)](docs/AI.md)

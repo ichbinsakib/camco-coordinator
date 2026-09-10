@@ -22,6 +22,7 @@ from app.config.settings import SettingsManager
 from app.ui.app_context import AppContext
 from app.ui.dialogs.lock_screen_dialog import LockScreenDialog
 from app.ui.idle_lock import IdleWatcher
+from app.ui.pages.ai_insights_page import AiInsightsPage
 from app.ui.pages.alerts_page import AlertsPage
 from app.ui.pages.analytics_page import AnalyticsPage
 from app.ui.pages.customer_orders_page import CustomerOrdersPage
@@ -41,7 +42,7 @@ from app.ui.pages.vendors_page import VendorsPage
 log = logging.getLogger(__name__)
 
 #: (page key, sidebar label) in the order specified for the sidebar.
-_NAV_ITEMS: list[tuple[str, str]] = [
+_BASE_NAV_ITEMS: list[tuple[str, str]] = [
     ("dashboard", "Dashboard"),
     ("customer_orders", "Customer Orders"),
     ("parts", "Parts"),
@@ -55,6 +56,13 @@ _NAV_ITEMS: list[tuple[str, str]] = [
     ("reports", "Reports"),
     ("analytics", "Analytics"),
     ("alerts", "Alerts"),
+]
+
+#: Inserted after "alerts" only when AppSettings.ai.enabled is on (spec rule
+#: 29: optional, off by default, nothing else depends on it).
+_AI_NAV_ITEM: tuple[str, str] = ("ai_insights", "AI Insights")
+
+_TRAILING_NAV_ITEMS: list[tuple[str, str]] = [
     ("search", "Search"),
     ("settings", "Settings"),
 ]
@@ -69,6 +77,11 @@ class MainWindow(QMainWindow):
         self._settings_manager = settings_manager
         self.setWindowTitle(f"{APP_NAME} — {context.current_user.display_name}")
         self.resize(1280, 800)
+
+        self._nav_items: list[tuple[str, str]] = list(_BASE_NAV_ITEMS)
+        if context.settings.ai.enabled:
+            self._nav_items.append(_AI_NAV_ITEM)
+        self._nav_items.extend(_TRAILING_NAV_ITEMS)
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -115,14 +128,16 @@ class MainWindow(QMainWindow):
         self._nav_group.setExclusive(True)
         self._nav_buttons: dict[str, QPushButton] = {}
 
-        for key, label in _NAV_ITEMS:
+        trailing_keys = {key for key, _label in _TRAILING_NAV_ITEMS}
+        for index, (key, label) in enumerate(self._nav_items):
             button = QPushButton(label)
             button.setCheckable(True)
             button.clicked.connect(lambda _checked, k=key: self._select_page(k))
             self._nav_group.addButton(button)
             self._nav_buttons[key] = button
             layout.addWidget(button)
-            if key == "search":
+            next_key = self._nav_items[index + 1][0] if index + 1 < len(self._nav_items) else None
+            if key not in trailing_keys and next_key in trailing_keys:
                 layout.addSpacing(8)
 
         layout.addStretch()
@@ -142,6 +157,8 @@ class MainWindow(QMainWindow):
         self._add_page("reports", ReportsPage(self._context))
         self._add_page("analytics", AnalyticsPage(self._context))
         self._add_page("alerts", AlertsPage(self._context))
+        if self._context.settings.ai.enabled:
+            self._add_page("ai_insights", AiInsightsPage(self._context))
         self._add_page("search", self._placeholder("Search", "search"))
         self._add_page("settings", SettingsPage(self._settings_manager))
 

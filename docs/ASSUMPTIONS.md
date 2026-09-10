@@ -56,3 +56,20 @@ of these is a reasonable default, and every one is reversible through
     out to matter for an external audience (e.g. emailing production status
     to someone without app access), it's a small addition to
     `app/reports/builders.py` following the existing pattern.
+12. **Delivery-risk model trains on final-state history, not point-in-time
+    snapshots** - the database records what a customer order line's status
+    is *now* (or was when it shipped), not a time series of what it was at
+    every past moment. A properly point-in-time-aware model would need to
+    know, for each historical order, what its status/blockers looked like
+    with N days left before its due date - data this schema doesn't
+    capture. Rather than fake that with a model that would silently overfit
+    to noise, the learned component in `app/ai/risk_model.py` only uses
+    features knowable from a closed line's static attributes (customer
+    importance, quantity, whether it was rescheduled), and real-time
+    signals (blocked status, material wait, stagnant operation, late linked
+    PO) are applied as a separate, transparent, rule-based adjustment on
+    top - not folded into the trained model. If tracking point-in-time
+    snapshots ever becomes worth the schema change (e.g. a
+    `CustomerOrderLineSnapshot` table written on each status change), the
+    learned model could then use genuinely predictive live-state features
+    instead of only static ones.

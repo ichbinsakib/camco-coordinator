@@ -79,6 +79,7 @@ class SettingsPage(QWidget):
         self._build_priority_alerts_tab()
         self._build_backup_tab()
         self._build_security_tab()
+        self._build_ai_tab()
         self._build_appearance_tab()
 
         button_row = QHBoxLayout()
@@ -244,6 +245,36 @@ class SettingsPage(QWidget):
         form.addRow("Lockout Duration", self._lockout_minutes)
         self._tabs.addTab(page, "Security")
 
+    def _build_ai_tab(self) -> None:
+        s = self._manager.settings
+        page = QWidget()
+        form = QFormLayout(page)
+
+        self._ai_enabled = QCheckBox("Enable AI Insights (Delivery Risk, Bottlenecks, Smart Search)")
+        self._ai_enabled.setChecked(s.ai.enabled)
+        form.addRow(self._ai_enabled)
+
+        note = QLabel(
+            "Off by default. Everything else in the application works fully without this - it only "
+            "adds one extra page of predictive analytics built from this database's own history. "
+            "Predictions are always shown as \"Predicted Risk\", clearly separate from actual status, "
+            "and never change any real order/production/purchasing data. No cloud service or network "
+            "access is used - the risk model trains locally on your own historical shipped orders."
+        )
+        note.setObjectName("PageSubtitle")
+        note.setWordWrap(True)
+        form.addRow(note)
+
+        self._ai_show_risk_predictions = QCheckBox("Show predicted risk on Customer Orders list (future use)")
+        self._ai_show_risk_predictions.setChecked(s.ai.show_risk_predictions)
+        form.addRow(self._ai_show_risk_predictions)
+
+        restart_note = QLabel("Restart the application for a change here to take effect.")
+        restart_note.setObjectName("PageSubtitle")
+        form.addRow(restart_note)
+
+        self._tabs.addTab(page, "AI")
+
     def _build_appearance_tab(self) -> None:
         s = self._manager.settings
         page = QWidget()
@@ -321,6 +352,11 @@ class SettingsPage(QWidget):
             min_password_length=self._min_password_length.value(),
             max_failed_attempts=self._max_failed_attempts.value(),
             lockout_minutes=self._lockout_minutes.value(),
+        )
+        s.ai = replace(
+            s.ai,
+            enabled=self._ai_enabled.isChecked(),
+            show_risk_predictions=self._ai_show_risk_predictions.isChecked(),
         )
         s.ui = replace(s.ui, theme=self._theme_combo.currentText())
 

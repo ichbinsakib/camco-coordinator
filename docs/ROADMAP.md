@@ -209,10 +209,36 @@ what came before (spec rule 62).
   installer (Inno Setup isn't installed in this environment) - both listed
   as concrete next steps in `docs/PACKAGING.md`
 
-## Phase 9 — Optional AI/ML (only after Phase 1-8 are stable)
+## Phase 9 — Optional AI/ML ✅ COMPLETE
 
-- Predictive late-order risk, bottleneck detection, delivery-risk scoring -
-  always shown as "Predicted Risk," never merged into or replacing "Actual
-  Status" (spec rule 28)
-- Disabled by default (`AiSettings.enabled = False`); the app is fully
-  functional with AI off
+- `app/ai/logistic_model.py`: a ~140-line dependency-free logistic
+  regression (no numpy/scikit-learn - rule 63) trained via batch gradient
+  descent, deterministic given the same input
+- `app/ai/risk_model.py`: Delivery Risk prediction blending a learned base
+  rate (trained on this database's own historical shipped order lines) with
+  real-time rule-based adjustments (blocked/material-wait/stagnant-op/late-
+  linked-PO/already-past-due) - falls back to rule-based-only scoring,
+  honestly labeled as such, below 20 historical examples
+- `app/ai/bottleneck_model.py`: deterministic recurring-bottleneck detection
+  from historical operation durations (no ML needed for this one - rule 63
+  again)
+- `app/ai/smart_search.py`: a deterministic keyword-based natural-language
+  query parser (no LLM dependency) covering the spec's own example queries,
+  including one that pulls in the Delivery Risk model ("likely to be late")
+- `AiInsightsPage`: three tabs (Delivery Risk, Recurring Bottlenecks, Smart
+  Search), reachable only when `AppSettings.ai.enabled` is on (default off -
+  Settings > AI tab); every risk number is shown beside, never instead of,
+  the real status column (spec rule 28)
+- 24 new tests (unit tests for the regression and search-parser helpers,
+  integration tests for training-label correctness, the minimum-sample
+  fallback, bottleneck aggregation, and end-to-end smart-search routing) -
+  145 passing tests total (141 default + 4 slow)
+- Full-app smoke test: confirmed the sidebar/page are correctly absent when
+  AI is disabled (the default) and fully functional - train, score, search -
+  once enabled, against realistically seeded historical and open data
+- Documented in `docs/AI.md`, including the one real limitation worth
+  stating plainly: the database stores final state, not point-in-time
+  snapshots, so the learned model's features are necessarily limited to a
+  line's static attributes - the real-time rule-based half exists
+  specifically to cover what that structurally can't learn (see
+  `docs/ASSUMPTIONS.md` #12)
