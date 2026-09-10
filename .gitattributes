@@ -1,0 +1,17 @@
+# Normalize line endings: store everything as LF in the repository,
+# regardless of what platform commits it. Stops the "will be replaced by
+# CRLF" warnings Git prints on Windows for every text file, and keeps diffs
+# clean regardless of which OS a contributor is on.
+* text=auto eol=lf
+
+# Binary/generated files - never diff or convert these.
+*.db binary
+*.db-shm binary
+*.db-wal binary
+*.xlsx binary
+*.xlsm binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
