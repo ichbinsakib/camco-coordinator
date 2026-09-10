@@ -1,9 +1,9 @@
 # CAMCO Coordinator
 
+![Tests](https://github.com/ichbinsakib/camco-coordinator/actions/workflows/tests.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![PySide6](https://img.shields.io/badge/UI-PySide6%20%28Qt%29-41cd52)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D6)
-![Tests](https://img.shields.io/badge/tests-149%20passing-brightgreen)
 ![Status](https://img.shields.io/badge/phases-1--9%20complete-success)
 ![License](https://img.shields.io/badge/license-Proprietary-lightgrey)
 
