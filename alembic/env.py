@@ -6,6 +6,7 @@ migrations always target whatever database the app is actually configured
 to use, including a ``CAMCO_HOME``-redirected one in tests/CI.
 """
 
+import logging
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
@@ -19,15 +20,28 @@ from app.database.base import Base
 config = context.config
 
 if config.config_file_name is not None:
-    # disable_existing_loggers defaults to True, which silently disables
-    # every logger the *running application* already configured (including
-    # the one that logs the first-run admin password - a real bug this
-    # caught: it printed nowhere, file or console, once init_database()
-    # ran Alembic). We already own logging setup end-to-end
+    # fileConfig() reconfigures the *root* logger from alembic.ini
+    # unconditionally - it replaces its handlers (dropping whatever the
+    # embedding application already attached, e.g. our RotatingFileHandler)
+    # and, with the default disable_existing_loggers=True, also disables
+    # every already-registered logger not listed in alembic.ini's [loggers]
+    # section. Both silently broke the app's own logging (the first-run
+    # admin password's WARNING call executed and produced no error, but
+    # landed nowhere - not the log file, not even the console once the
+    # handler was gone). We already own logging setup end-to-end
     # (app/utils/logging_setup.py); this call only needs to exist for
-    # alembic.ini's formatting when Alembic is run standalone from a
-    # terminal, so it must never disable loggers that already exist.
+    # alembic.ini's own formatting when Alembic is run standalone from a
+    # terminal. So: snapshot the root logger's state, let fileConfig() do
+    # its thing, then restore it - alembic.ini's config still applies for
+    # standalone use (nothing to restore then), but it can never clobber an
+    # application that configured logging before importing this module.
+    _root_logger = logging.getLogger()
+    _had_handlers = list(_root_logger.handlers)
+    _had_level = _root_logger.level
     fileConfig(config.config_file_name, disable_existing_loggers=False)
+    if _had_handlers:
+        _root_logger.handlers = _had_handlers
+        _root_logger.setLevel(_had_level)
 
 target_metadata = Base.metadata
 
