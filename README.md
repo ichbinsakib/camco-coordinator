@@ -5,6 +5,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D6)
 ![Tests](https://img.shields.io/badge/tests-149%20passing-brightgreen)
 ![Status](https://img.shields.io/badge/phases-1--9%20complete-success)
+![License](https://img.shields.io/badge/license-Proprietary-lightgrey)
 
 A Windows desktop application for manufacturing coordination and expediting
 at CAMCO Manufacturing: one place to see what's late, what's due, what's
