@@ -89,4 +89,5 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown of
 - [Security review](docs/SECURITY.md)
 - [Packaging (EXE build, installer)](docs/PACKAGING.md)
 - [AI / Machine Learning (optional, off by default)](docs/AI.md)
+- [Shared database on a network drive (multi-coordinator deployment)](docs/NETWORK_SHARE.md)
 - [Contributing](CONTRIBUTING.md)
