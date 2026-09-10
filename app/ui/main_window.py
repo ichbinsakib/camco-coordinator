@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 from app import APP_NAME
 from app.config.settings import SettingsManager
 from app.ui.app_context import AppContext
+from app.ui.dialogs.change_password_dialog import ChangePasswordDialog
 from app.ui.dialogs.lock_screen_dialog import LockScreenDialog
 from app.ui.idle_lock import IdleWatcher
 from app.ui.pages.ai_insights_page import AiInsightsPage
@@ -100,6 +101,9 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(
             f"Signed in as {context.current_user.display_name} ({context.current_user.role})"
         )
+        change_password_btn = QPushButton("Change Password")
+        change_password_btn.clicked.connect(self._open_change_password)
+        self.statusBar().addPermanentWidget(change_password_btn)
 
         self._restore_geometry()
         self._select_page(context.settings.ui.last_page or "dashboard")
@@ -186,6 +190,15 @@ class MainWindow(QMainWindow):
         if button is not None:
             button.setChecked(True)
         self._context.settings.ui.last_page = key
+
+    # -- account ------------------------------------------------------------
+
+    def _open_change_password(self) -> None:
+        with self._context.session_factory() as session:
+            dialog = ChangePasswordDialog(
+                session, self._context.current_user.id, self._context.current_user.username, parent=self
+            )
+            dialog.exec()
 
     # -- idle lock ----------------------------------------------------------
 
